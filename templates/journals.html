@@ -2,122 +2,98 @@
 
 {% block content %}
 <div class="journals-container fade-in">
-    <!-- Header Section -->
-    <div class="header-section text-center mb-5">
-        <h1 class="display-4 gradient-text mb-3">Your Journal Journey</h1>
-        <div class="stats-bar">
-            <div class="stat-item">
-                <i class="fas fa-book-open"></i>
-                <span>{{ entries|length }} Entries</span>
-            </div>
-            <div class="stat-item">
-                <i class="fas fa-calendar"></i>
-                <span>{{ entries[0].date_created.strftime('%B %Y') if entries }}</span>
-            </div>
-            <div class="stat-item">
-                <i class="fas fa-chart-line"></i>
-                <span>Monthly Progress</span>
-            </div>
+    <!-- Header with Stats -->
+    <h1 class="text-center gradient-text mb-4">Your Journal Journey</h1>
+    <div class="d-flex justify-content-center gap-4 mb-4 stats-bar">
+        <div class="stat-badge">
+            <i class="fas fa-book"></i>
+            {{ entries|length }} Entries
+        </div>
+        <div class="stat-badge">
+            <i class="fas fa-calendar"></i>
+            {{ entries[0].date_created.strftime('%B %Y') if entries }}
         </div>
     </div>
 
-    <!-- Filters and Search -->
-    <div class="tools-section mb-4">
-        <div class="row g-3 align-items-center">
-            <div class="col-md-6">
-                <div class="search-box">
-                    <i class="fas fa-search"></i>
-                    <input type="text" id="searchInput" class="form-control" placeholder="Search your entries...">
-                </div>
+    <!-- Search and Filters -->
+    <div class="search-section mb-4">
+        <div class="d-flex gap-3 flex-wrap">
+            <div class="search-box flex-grow-1">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Search your entries..." class="form-control" id="searchInput">
             </div>
-            <div class="col-md-6">
-                <div class="d-flex gap-2 justify-content-md-end">
-                    <select class="form-select" id="sentimentFilter">
-                        <option value="">All Sentiments</option>
-                        <option value="positive">Positive</option>
-                        <option value="neutral">Neutral</option>
-                        <option value="negative">Negative</option>
-                    </select>
-                    <select class="form-select" id="dateFilter">
-                        <option value="">All Time</option>
-                        <option value="week">This Week</option>
-                        <option value="month">This Month</option>
-                        <option value="year">This Year</option>
-                    </select>
-                </div>
-            </div>
+            <select class="form-select w-auto" id="sentimentFilter">
+                <option value="">All Moods</option>
+                <option value="positive">Happy</option>
+                <option value="neutral">Neutral</option>
+                <option value="negative">Sad</option>
+            </select>
+            <select class="form-select w-auto" id="dateFilter">
+                <option value="">All Time</option>
+                <option value="week">This Week</option>
+                <option value="month">This Month</option>
+                <option value="year">This Year</option>
+            </select>
         </div>
     </div>
 
-    <!-- Journal Entries Grid -->
+    <!-- Journal Entries -->
     <div class="journal-grid">
         {% for entry in entries %}
         <div class="journal-card" data-sentiment="{{ entry.sentiment.lower() }}">
-            <div class="card-header">
-                <div class="date-badge">
-                    <div class="month">{{ entry.date_created.strftime('%b') }}</div>
-                    <div class="day">{{ entry.date_created.strftime('%d') }}</div>
-                    <div class="year">{{ entry.date_created.strftime('%Y') }}</div>
-                </div>
-                <div class="header-actions">
-                    <span class="time"><i class="far fa-clock"></i> {{ entry.date_created.strftime('%I:%M %p') }}</span>
-                    <div class="sentiment-badge {{ entry.sentiment.lower() }}">
-                        {% if entry.sentiment.lower() == 'positive' %}
-                            <i class="fas fa-smile"></i>
-                        {% elif entry.sentiment.lower() == 'negative' %}
-                            <i class="fas fa-frown"></i>
-                        {% else %}
-                            <i class="fas fa-meh"></i>
-                        {% endif %}
-                        {{ entry.sentiment }}
-                    </div>
-                </div>
+            <div class="date-badge">
+                <span class="month">{{ entry.date_created.strftime('%b') }}</span>
+                <span class="day">{{ entry.date_created.strftime('%d') }}</span>
+                <span class="year">{{ entry.date_created.strftime('%Y') }}</span>
             </div>
-
-            <div class="card-body">
-                <div class="content-preview">{{ entry.content|truncate(200) }}</div>
-                
+            <div class="time-stamp">
+                <i class="far fa-clock"></i>
+                {{ entry.date_created.strftime('%I:%M %p') }}
+            </div>
+            <div class="card-content">
+                <p class="preview-text">{{ entry.content|truncate(200) }}</p>
                 {% if entry.topics %}
-                <div class="topics-section">
+                <div class="topics">
                     {% for topic in entry.topics.split(';') %}
-                        <span class="topic-tag">{{ topic }}</span>
+                    <span class="topic-tag">{{ topic }}</span>
                     {% endfor %}
                 </div>
                 {% endif %}
             </div>
-
-            <div class="card-footer">
-                <button class="btn btn-link view-more" onclick="toggleFullContent(this)">
-                    <i class="fas fa-chevron-down"></i> Read More
+            <div class="card-actions">
+                <button class="btn-read-more" onclick="showJournalModal({{ loop.index0 }})">
+                    <i class="fas fa-book-open"></i> Read More
                 </button>
                 <form action="{{ url_for('delete_entry', entry_id=entry.id) }}" 
                       method="POST" 
-                      class="delete-form" 
-                      onsubmit="return confirmDelete(event)">
-                    <button type="submit" class="btn btn-link text-danger">
-                        <i class="fas fa-trash-alt"></i> Delete
+                      class="d-inline"
+                      onsubmit="return confirmDelete()">
+                    <button type="submit" class="btn-delete">
+                        <i class="fas fa-trash"></i>
                     </button>
                 </form>
             </div>
-
-            <div class="full-content" style="display: none;">
-                <div class="content-wrapper">
-                    {{ entry.content }}
-                </div>
-            </div>
-        </div>
-        {% else %}
-        <div class="empty-state">
-            <div class="empty-icon">
-                <i class="fas fa-book-open"></i>
-            </div>
-            <h3>Start Your Journal Journey</h3>
-            <p>Your thoughts and feelings matter. Begin writing your story today.</p>
-            <a href="{{ url_for('express_feelings') }}" class="btn btn-primary btn-lg">
-                <i class="fas fa-pencil-alt me-2"></i>Write Your First Entry
-            </a>
         </div>
         {% endfor %}
+    </div>
+</div>
+
+<!-- Journal Modal -->
+<div class="journal-modal" id="journalModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-date">
+                <span class="month" id="modalMonth"></span>
+                <span class="day" id="modalDay"></span>
+                <span class="year" id="modalYear"></span>
+            </div>
+            <button class="btn-close" onclick="hideJournalModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div id="modalContent" class="modal-text"></div>
+        </div>
     </div>
 </div>
 
@@ -132,7 +108,6 @@
         background: linear-gradient(135deg, var(--primary), var(--secondary));
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
-        font-weight: bold;
     }
 
     .stats-bar {
@@ -142,21 +117,21 @@
         margin-top: 1.5rem;
     }
 
-    .stat-item {
+    .stat-badge {
         background: var(--glass);
         backdrop-filter: blur(10px);
-        padding: 0.75rem 1.5rem;
+        padding: 0.5rem 1.5rem;
         border-radius: 1rem;
         display: flex;
         align-items: center;
         gap: 0.5rem;
-        font-size: 0.9rem;
         color: var(--primary);
         border: 1px solid rgba(124, 58, 237, 0.2);
     }
 
     .search-box {
         position: relative;
+        min-width: 300px;
     }
 
     .search-box i {
@@ -193,6 +168,7 @@
         overflow: hidden;
         border: 1px solid rgba(255, 255, 255, 0.2);
         transition: transform 0.3s ease, box-shadow 0.3s ease;
+        padding: 1.5rem; /* Added padding for better spacing */
     }
 
     .journal-card:hover {
@@ -200,17 +176,12 @@
         box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
     }
 
-    .card-header {
-        background: var(--glass-gradient);
-        padding: 1rem;
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-    }
-
     .date-badge {
         text-align: center;
         line-height: 1.2;
+        background: rgba(124, 58, 237, 0.1);
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
     }
 
     .date-badge .month {
@@ -229,40 +200,20 @@
         opacity: 0.7;
     }
 
-    .sentiment-badge {
-        padding: 0.4rem 0.8rem;
-        border-radius: 1rem;
-        font-size: 0.8rem;
-        display: flex;
-        align-items: center;
-        gap: 0.5rem;
+    .time-stamp {
+        position: absolute;
+        top: 1.5rem;
+        right: 1.5rem;
+        font-size: 0.9rem;
+        color: #666;
     }
 
-    .sentiment-badge.positive {
-        background: rgba(16, 185, 129, 0.1);
-        color: #059669;
-    }
-
-    .sentiment-badge.negative {
-        background: rgba(239, 68, 68, 0.1);
-        color: #DC2626;
-    }
-
-    .sentiment-badge.neutral {
-        background: rgba(107, 114, 128, 0.1);
-        color: #4B5563;
-    }
-
-    .card-body {
-        padding: 1.5rem;
-    }
-
-    .content-preview {
+    .preview-text {
+        margin: 1rem 0;
         line-height: 1.6;
-        margin-bottom: 1rem;
     }
 
-    .topics-section {
+    .topics {
         display: flex;
         flex-wrap: wrap;
         gap: 0.5rem;
@@ -277,116 +228,153 @@
         font-size: 0.8rem;
     }
 
-    .card-footer {
-        padding: 1rem;
-        background: rgba(124, 58, 237, 0.05);
+    .card-actions {
         display: flex;
         justify-content: space-between;
+        margin-top: 1rem;
+        padding-top: 1rem;
         border-top: 1px solid rgba(255, 255, 255, 0.2);
     }
 
-    .btn-link {
-        color: var(--primary);
-        text-decoration: none;
-        font-size: 0.9rem;
+    .btn-read-more, .btn-delete {
+        background: none;
+        border: none;
         padding: 0.5rem 1rem;
         border-radius: 0.5rem;
-        transition: all 0.3s ease;
+        transition: all 0.3s;
     }
 
-    .btn-link:hover {
+    .btn-read-more {
+        color: var(--primary);
+    }
+
+    .btn-delete {
+        color: #DC2626;
+    }
+
+    .btn-read-more:hover {
         background: rgba(124, 58, 237, 0.1);
     }
 
-    .full-content {
+    .btn-delete:hover {
+        background: rgba(220, 38, 38, 0.1);
+    }
+
+    /* Modal Styles */
+    .journal-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+        opacity: 0;
+        transition: opacity 0.3s;
+    }
+
+    .journal-modal.show {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        opacity: 1;
+    }
+
+    .modal-content {
+        background: #1e1e1e; /* Dark background for modal */
+        border-radius: 1rem;
+        width: 90%;
+        max-width: 800px;
+        max-height: 90vh;
+        overflow: hidden;
+        transform: translateY(20px);
+        transition: transform 0.3s;
+    }
+
+    .journal-modal.show .modal-content {
+        transform: translateY(0);
+    }
+
+    .modal-header {
         padding: 1.5rem;
-        background: rgba(124, 58, 237, 0.05);
-        border-top: 1px solid rgba(255, 255, 255, 0.2);
+        border-bottom: 1px solid rgba(124, 58, 237, 0.2);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
 
-    .empty-state {
-        grid-column: 1 / -1;
-        text-align: center;
-        padding: 4rem 2rem;
+    .modal-body {
+        padding: 1.5rem;
+        overflow-y: auto;
+        max-height: calc(90vh - 100px);
+        line-height: 1.8;
+        color: #ffffff; /* Set modal text color to white */
     }
 
-    .empty-icon {
-        font-size: 3rem;
-        color: var(--primary);
-        margin-bottom: 1rem;
+    .btn-close {
+        background: none;
+        border: none;
+        font-size: 1.5rem;
+        color: #666;
+        cursor: pointer;
+        padding: 0.5rem;
+        border-radius: 50%;
+        transition: background 0.3s;
     }
 
-    @media (max-width: 768px) {
-        .journals-container {
-            padding: 1rem;
-        }
-
-        .stats-bar {
-            flex-direction: column;
-            align-items: center;
-            gap: 1rem;
-        }
-
-        .journal-grid {
-            grid-template-columns: 1fr;
-        }
+    .btn-close:hover {
+        background: rgba(0, 0, 0, 0.1);
     }
 </style>
 
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Search functionality
-    const searchInput = document.getElementById('searchInput');
-    const journalCards = document.querySelectorAll('.journal-card');
+const entries = [
+    {% for entry in entries %}
+    {
+        month: "{{ entry.date_created.strftime('%b') }}",
+        day: "{{ entry.date_created.strftime('%d') }}",
+        year: "{{ entry.date_created.strftime('%Y') }}",
+        content: `{{ entry.content|safe }}`
+    }{% if not loop.last %},{% endif %}
+    {% endfor %}
+];
 
-    searchInput.addEventListener('input', function() {
-        const searchTerm = this.value.toLowerCase();
-        
-        journalCards.forEach(card => {
-            const content = card.querySelector('.content-preview').textContent.toLowerCase();
-            const isVisible = content.includes(searchTerm);
-            card.style.display = isVisible ? 'block' : 'none';
-        });
-    });
-
-    // Sentiment filter
-    const sentimentFilter = document.getElementById('sentimentFilter');
+function showJournalModal(index) {
+    const modal = document.getElementById('journalModal');
+    const entry = entries[index];
     
-    sentimentFilter.addEventListener('change', function() {
-        const selectedSentiment = this.value.toLowerCase();
-        
-        journalCards.forEach(card => {
-            if (!selectedSentiment || card.dataset.sentiment === selectedSentiment) {
-                card.style.display = 'block';
-            } else {
-                card.style.display = 'none';
-            }
-        });
-    });
+    document.getElementById('modalMonth').textContent = entry.month;
+    document.getElementById('modalDay').textContent = entry.day;
+    document.getElementById('modalYear').textContent = entry.year;
+    document.getElementById('modalContent').innerHTML = entry.content;
+    
+    modal.classList.add('show');
+    document.body.style.overflow = 'hidden';
+}
 
-    // Add fade-in animation for cards
-    journalCards.forEach((card, index) => {
-        card.style.animation = `fadeIn 0.5s ease-out ${index * 0.1}s forwards`;
-    });
+function hideJournalModal() {
+    const modal = document.getElementById('journalModal');
+    modal.classList.remove('show');
+    document.body.style.overflow = '';
+}
+
+function confirmDelete() {
+    return confirm('Are you sure you want to delete this entry? This action cannot be undone.');
+}
+
+// Close modal when clicking outside
+document.getElementById('journalModal').addEventListener('click', function(e) {
+    if (e.target === this) {
+        hideJournalModal();
+    }
 });
 
-function toggleFullContent(btn) {
-    const card = btn.closest('.journal-card');
-    const fullContent = card.querySelector('.full-content');
-    const isHidden = fullContent.style.display === 'none';
-    
-    fullContent.style.display = isHidden ? 'block' : 'none';
-    btn.innerHTML = isHidden ? 
-        '<i class="fas fa-chevron-up"></i> Show Less' :
-        '<i class="fas fa-chevron-down"></i> Read More';
-        
-    if (isHidden) {
-        fullContent.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+// Close modal with Escape key
+document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && document.getElementById('journalModal').classList.contains('show')) {
+        hideJournalModal();
     }
-}
-
-function confirmDelete(event) {
-    return confirm('Are you sure you want to delete this journal entry? This action cannot be undone.');
-}
+});
 </script>
 {% endblock %}

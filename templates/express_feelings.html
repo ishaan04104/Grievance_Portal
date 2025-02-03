@@ -7,10 +7,48 @@
         <p class="text-muted lead">Let your thoughts flow freely in a safe space</p>
     </div>
 
+    <!-- Mood Selection -->
+    <div class="mood-selector mb-4 text-center">
+        <h5 class="text-muted mb-3">How are you feeling today?</h5>
+        <div class="d-flex justify-content-center gap-3">
+            <button class="mood-btn" data-mood="happy">
+                <i class="fas fa-smile-beam fa-2x"></i>
+                <span>Happy</span>
+            </button>
+            <button class="mood-btn" data-mood="neutral">
+                <i class="fas fa-meh fa-2x"></i>
+                <span>Neutral</span>
+            </button>
+            <button class="mood-btn" data-mood="sad">
+                <i class="fas fa-frown fa-2x"></i>
+                <span>Sad</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Writing Tips Carousel -->
     <div class="writing-tip alert alert-purple alert-dismissible fade show mb-4">
-        <div class="d-flex align-items-center">
-            <i class="fas fa-lightbulb me-2"></i>
-            <div>Writing Tip: Try to be specific about your emotions and experiences</div>
+        <div id="tipCarousel" class="carousel slide" data-bs-ride="carousel">
+            <div class="carousel-inner">
+                <div class="carousel-item active">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-lightbulb me-2"></i>
+                        <div>Writing Tip: Try to be specific about your emotions and experiences</div>
+                    </div>
+                </div>
+                <div class="carousel-item">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-heart me-2"></i>
+                        <div>Remember: Your feelings are valid and worthy of expression</div>
+                    </div>
+                </div>
+                <div class="carousel-item">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-feather me-2"></i>
+                        <div>Tip: Write as if you're talking to a trusted friend</div>
+                    </div>
+                </div>
+            </div>
         </div>
         <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
     </div>
@@ -18,9 +56,36 @@
     <div class="card shadow-lg border-0">
         <div class="card-header bg-gradient text-center py-3">
             <h4 class="card-title mb-0">Journal Entry</h4>
+            <div class="writing-mode-toggle mt-2">
+                <button class="btn btn-sm btn-outline-light active" id="freeWriteMode">
+                    <i class="fas fa-pencil-alt me-1"></i> Free Write
+                </button>
+                <button class="btn btn-sm btn-outline-light" id="guidedMode">
+                    <i class="fas fa-list-ul me-1"></i> Guided
+                </button>
+            </div>
         </div>
         <div class="card-body p-4">
             <form method="POST" id="journalForm">
+                <!-- Guided Prompts (initially hidden) -->
+                <div id="guidedPrompts" class="mb-3" style="display: none;">
+                    <div class="prompt-list">
+                        <div class="prompt-item mb-2">
+                            <label class="form-label">What's the strongest emotion you're feeling right now?</label>
+                            <input type="text" class="form-control mb-2" id="emotionInput">
+                        </div>
+                        <div class="prompt-item mb-2">
+                            <label class="form-label">What triggered this emotion?</label>
+                            <input type="text" class="form-control mb-2" id="triggerInput">
+                        </div>
+                        <div class="prompt-item mb-2">
+                            <label class="form-label">How would you like to feel instead?</label>
+                            <input type="text" class="form-control" id="desiredFeelingInput">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Main Writing Area -->
                 <div class="form-group position-relative">
                     <textarea 
                         name="content" 
@@ -29,18 +94,24 @@
                         placeholder="Dear Journal..."
                         required></textarea>
                     
-                    <div class="text-stats mt-3 d-flex justify-content-between text-muted">
-                        <div>
-                            <small>
-                                <i class="fas fa-font me-1"></i>
-                                Words: <span id="wordCount">0</span>
-                            </small>
-                        </div>
-                        <div>
-                            <small>
-                                <i class="fas fa-text-width me-1"></i>
-                                Characters: <span id="charCount">0</span>
-                            </small>
+                    <div class="writing-tools mt-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="text-stats text-muted">
+                                <small>
+                                    <i class="fas fa-font me-1"></i>
+                                    Words: <span id="wordCount">0</span>
+                                </small>
+                                <small class="ms-3">
+                                    <i class="fas fa-text-width me-1"></i>
+                                    Characters: <span id="charCount">0</span>
+                                </small>
+                            </div>
+                            <div class="writing-timer">
+                                <small>
+                                    <i class="fas fa-clock me-1"></i>
+                                    Time: <span id="writeTime">0:00</span>
+                                </small>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -57,101 +128,171 @@
 </div>
 
 <style>
-    .gradient-text {
-        background: linear-gradient(135deg, var(--primary), var(--secondary));
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        font-weight: bold;
-    }
-
-    .alert-purple {
-        background-color: rgba(124, 58, 237, 0.1);
-        border-color: rgba(124, 58, 237, 0.2);
-        color: var(--primary);
-    }
-
-    .card {
+    .mood-btn {
+        background: none;
+        border: 2px solid transparent;
         border-radius: 1rem;
-        overflow: hidden;
-        transition: all 0.3s ease;
-    }
-
-    .card:hover {
-        transform: translateY(-5px);
-    }
-
-    .card-header.bg-gradient {
-        background: linear-gradient(135deg, var(--primary-light), var(--primary));
-        color: white;
-    }
-
-    textarea.form-control {
-        border: 2px solid rgba(124, 58, 237, 0.1);
-        border-radius: 0.75rem;
         padding: 1rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--text);
         transition: all 0.3s ease;
+        min-width: 120px;
     }
 
-    textarea.form-control:focus {
+    .mood-btn:hover {
+        transform: translateY(-2px);
+    }
+
+    .mood-btn.selected {
         border-color: var(--primary);
-        box-shadow: 0 0 0 0.25rem rgba(124, 58, 237, 0.25);
+        background: rgba(124, 58, 237, 0.1);
     }
 
-    .text-stats {
-        font-size: 0.875rem;
+    .writing-mode-toggle .btn {
+        border-radius: 2rem;
+        padding: 0.25rem 1rem;
+    }
+
+    .prompt-item {
+        background: rgba(124, 58, 237, 0.05);
+        padding: 1rem;
+        border-radius: 0.5rem;
+        color: #ffffff; /* Set text color to white */
+    }
+
+    .prompt-item label {
+        color: #ffffff; /* Set label color to white */
+    }
+
+    #tipCarousel {
+        cursor: pointer;
+    }
+
+    .carousel-item {
+        transition: transform 0.6s ease-in-out;
+    }
+
+    /* Dark mode styles */
+    body {
+        background-color: #121212; /* Dark background */
+        color: #ffffff; /* Light text */
+    }
+
+    .text-muted {
+        color: #b0b0b0; /* Muted text for dark mode */
+    }
+
+    .form-control {
+        background-color: #1e1e1e; /* Dark input background */
+        color: #ffffff; /* Light input text */
+        border: 1px solid #444; /* Dark border */
+    }
+
+    .form-control::placeholder {
+        color: #888; /* Placeholder color */
     }
 
     .btn-primary {
-        background: linear-gradient(135deg, var(--primary), var(--secondary));
-        border: none;
-        border-radius: 0.75rem;
-        padding: 1rem 2rem;
-        transition: all 0.3s ease;
+        background-color: #9333EA; /* Primary button color */
+        border: none; /* No border */
     }
 
     .btn-primary:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 5px 15px rgba(124, 58, 237, 0.4);
-    }
-
-    @keyframes fadeInUp {
-        from {
-            opacity: 0;
-            transform: translateY(20px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    .fade-in {
-        animation: fadeInUp 0.5s ease-out;
+        background-color: #7e22ce; /* Darker shade on hover */
     }
 </style>
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Mood Selection
+    const moodBtns = document.querySelectorAll('.mood-btn');
+    moodBtns.forEach(btn => {
+        btn.addEventListener('click', function() {
+            moodBtns.forEach(b => b.classList.remove('selected'));
+            this.classList.add('selected');
+            
+            // Add selected mood as hidden input
+            const moodInput = document.createElement('input');
+            moodInput.type = 'hidden';
+            moodInput.name = 'mood';
+            moodInput.value = this.dataset.mood;
+            document.getElementById('journalForm').appendChild(moodInput);
+        });
+    });
+
+    // Writing Mode Toggle
+    const freeWriteMode = document.getElementById('freeWriteMode');
+    const guidedMode = document.getElementById('guidedMode');
+    const guidedPrompts = document.getElementById('guidedPrompts');
+
+    freeWriteMode.addEventListener('click', function() {
+        this.classList.add('active');
+        guidedMode.classList.remove('active');
+        guidedPrompts.style.display = 'none';
+    });
+
+    guidedMode.addEventListener('click', function() {
+        this.classList.toggle('active');
+        freeWriteMode.classList.remove('active');
+        guidedPrompts.style.display = this.classList.contains('active') ? 'block' : 'none';
+    });
+
+    // Word and Character Count
     const textarea = document.querySelector('textarea[name="content"]');
     const wordCount = document.getElementById('wordCount');
     const charCount = document.getElementById('charCount');
+    const writeTime = document.getElementById('writeTime');
+    let startTime = Date.now();
+    let timer;
 
     function updateCounts() {
         const text = textarea.value.trim();
-        const words = text ? text.split(/\s+/).length : 0;
+        const words = text ? text.split(/\ \s+/).length : 0;
         const chars = textarea.value.length;
 
         wordCount.textContent = words;
         charCount.textContent = chars;
     }
 
+    function updateTimer() {
+        const elapsed = Math.floor((Date.now() - startTime) / 1000);
+        const minutes = Math.floor(elapsed / 60);
+        const seconds = elapsed % 60;
+        writeTime.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
+
     textarea.addEventListener('input', updateCounts);
-    textarea.addEventListener('keyup', updateCounts);
+    textarea.addEventListener('focus', function() {
+        if (!timer) {
+            startTime = Date.now();
+            timer = setInterval(updateTimer, 1000);
+        }
+    });
 
     // Auto-resize textarea
     textarea.addEventListener('input', function() {
         this.style.height = 'auto';
         this.style.height = (this.scrollHeight) + 'px';
+    });
+
+    // Initialize Bootstrap carousel
+    new bootstrap.Carousel(document.getElementById('tipCarousel'), {
+        interval: 5000
+    });
+
+    // Concatenate guided prompt inputs with the main content before form submission
+    document.getElementById('journalForm').addEventListener('submit', function(event) {
+        const emotion = document.getElementById('emotionInput').value;
+        const trigger = document.getElementById('triggerInput').value;
+        const desiredFeeling = document.getElementById('desiredFeelingInput').value;
+
+        if (emotion || trigger || desiredFeeling) {
+            const guidedContent = `Current mindspace:\n- Emotion: ${emotion}\n- What triggered it: ${trigger}\n- What is the desired feeling: ${desiredFeeling}\n`;
+            textarea.value = textarea.value + '\n\n' + guidedContent;
+        }
     });
 });
 </script>
