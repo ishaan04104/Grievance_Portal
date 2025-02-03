@@ -252,6 +252,8 @@ import nltk
 from gensim import corpora
 from gensim.models import LdaModel
 import google.generativeai as genai
+from datetime import datetime, timedelta  # Import timedelta
+import pytz  # Import pytz for timezone handling
 
 # Ensure NLTK resources are downloaded
 nltk.download('punkt')
@@ -285,9 +287,8 @@ class JournalEntry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.Text, nullable=False)
     summary = db.Column(db.Text, nullable=True)
-    sentiment = db.Column(db.Text, nullable=True)
-    topics = db.Column(db.Text, nullable=True)
-    date_created = db.Column(db.DateTime, default=db.func.current_timestamp())
+    sentiment = db.Column(db.Text, nullable=True)  # Changed from topics to sentiment
+    date_created = db.Column(db.DateTime, default=datetime.now(pytz.timezone('Asia/Kolkata')))  # Set default to IST
 
     def __repr__(self):
         return f'<JournalEntry {self.id}>'
@@ -332,20 +333,16 @@ def analyze_sentiment(text):
     
     # Combine sentiments (you can customize this logic)
     overall_sentiment = max(sentiments, key=lambda x: x['score'])  # Get the sentiment with the highest score
-    return overall_sentiment['label'], overall_sentiment['score']
-
-def extract_topics(texts, num_topics=2):
-    # Preprocess the documents for topic modeling
-    processed_texts = [clean_text(text).split() for text in texts]
-    dictionary = corpora.Dictionary(processed_texts)
-    corpus = [dictionary.doc2bow(text) for text in processed_texts]
     
-    # Train the LDA model
-    lda_model = LdaModel(corpus, num_topics=num_topics, id2word=dictionary, passes=10)
+    # Map the sentiment labels to user-friendly terms
+    sentiment_mapping = {
+        'LABEL_0': 'sad',
+        'LABEL_1': 'neutral',
+        'LABEL_2': 'happy'
+    }
     
-    # Extract topics
-    topics = lda_model.print_topics(num_words=3)
-    return topics
+    sentiment_label = sentiment_mapping.get(overall_sentiment['label'], 'unknown')
+    return sentiment_label, overall_sentiment['score']
 
 @app.route('/')
 def home():
@@ -354,30 +351,16 @@ def home():
 @app.route('/express_feelings', methods=['GET', 'POST'])
 def express_feelings():
     if request.method == 'POST':
-        # Get the main content from the textarea
         content = request.form['content']
         
-        # Get guided prompt inputs
-        emotion = request.form.get('emotion', '')
-        trigger = request.form.get('trigger', '')
-        desired_feeling = request.form.get('desired_feeling', '')
-
-        # Concatenate guided prompt inputs with the main content
-        if emotion or trigger or desired_feeling:
-            content += f"\n\nGuided Prompts:\n- Emotion: {emotion}\n- Trigger: {trigger}\n- Desired Feeling: {desired_feeling}"
-
         # Process the content and generate summary
         summary = summarize_journal_entry(content)
         
         # Analyze sentiment
         sentiment_label, sentiment_score = analyze_sentiment(content)
         
-        # Extract topics
-        topics = extract_topics([content])
-        topics_str = "; ".join([f"Topic {i}: {topic[1]}" for i, topic in enumerate(topics)])
-        
-        # Save the journal entry with summary, sentiment, and topics
-        new_entry = JournalEntry(content=content, summary=summary, sentiment=sentiment_label, topics=topics_str)
+        # Save the journal entry with summary and sentiment
+        new_entry = JournalEntry(content=content, summary=summary, sentiment=sentiment_label)
         db.session.add(new_entry)
         db.session.commit()
         
@@ -387,7 +370,25 @@ def express_feelings():
 
 @app.route('/journals')
 def journals():
-    entries = JournalEntry.query.order_by(JournalEntry.date_created.desc()).all()
+    sentiment_filter = request.args.get('sentiment')
+    date_filter = request.args.get('date')
+
+    # Get all entries
+    entries = JournalEntry.query
+
+    # Filter by sentiment if specified
+    if sentiment_filter:
+        entries = entries.filter(JournalEntry.sentiment == sentiment_filter)
+
+    # Sort by date if specified
+    if date_filter == 'week':
+        entries = entries.filter(JournalEntry.date_created >= (datetime.now(pytz.timezone('Asia/Kolkata')) - timedelta(weeks=1)))
+    elif date_filter == 'month':
+        entries = entries.filter(JournalEntry.date_created >= (datetime.now(pytz.timezone('Asia/Kolkata')) - timedelta(days=30)))
+    elif date_filter == 'year':
+        entries = entries.filter(JournalEntry.date_created >= (datetime.now(pytz.timezone('Asia/Kolkata')) - timedelta(days=365)))
+
+    entries = entries.order_by(JournalEntry.date_created.desc()).all()
     return render_template('journals.html', entries=entries)
 
 @app.route('/delete_entry/<int:entry_id>', methods=['POST'])
