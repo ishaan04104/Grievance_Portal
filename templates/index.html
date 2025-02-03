@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Grievance Chatbot</title>
+    <style>
+        body { font-family: Arial, sans-serif; text-align: center; }
+        #chatbox { width: 60%; margin: auto; padding: 20px; border: 1px solid #ccc; }
+        .user { color: blue; }
+        .bot { color: green; }
+    </style>
+</head>
+<body>
+    <h2>Grievance Chatbot</h2>
+    <div id="chatbox">
+        <div id="chat"></div>
+        <input type="text" id="userInput" placeholder="Type your message..." />
+        <button onclick="sendMessage()">Send</button>
+    </div>
+
+    <script>
+        function sendMessage() {
+            let userInput = document.getElementById("userInput").value;
+            let chatDiv = document.getElementById("chat");
+            
+            if (userInput.trim() === "") return;
+            
+            chatDiv.innerHTML += `<p class="user"><b>You:</b> ${userInput}</p>`;
+            document.getElementById("userInput").value = "";
+
+            fetch("/chat", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ message: userInput })
+            })
+            .then(response => response.json())
+            .then(data => {
+                chatDiv.innerHTML += `<p class="bot"><b>Bot:</b> ${data.response}</p>`;
+            })
+            .catch(error => {
+                chatDiv.innerHTML += `<p class="bot"><b>Bot:</b> Sorry, an error occurred.</p>`;
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-5 fade-in">
+    <div class="text-center mb-5">
+        <h1 class="display-4 mb-3 gradient-text">Express Your Feelings</h1>
+        <p class="text-muted lead">Let your thoughts flow freely in a safe space</p>
+    </div>
+
+    <div class="writing-tip alert alert-purple alert-dismissible fade show mb-4">
+        <div class="d-flex align-items-center">
+            <i class="fas fa-lightbulb me-2"></i>
+            <div>Writing Tip: Try to be specific about your emotions and experiences</div>
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+
+    <div class="card shadow-lg border-0">
+        <div class="card-header bg-gradient text-center py-3">
+            <h4 class="card-title mb-0">Journal Entry</h4>
+        </div>
+        <div class="card-body p-4">
+            <form method="POST" id="journalForm">
+                <div class="form-group position-relative">
+                    <textarea 
+                        name="content" 
+                        class="form-control form-control-lg shadow-sm" 
+                        rows="8" 
+                        placeholder="Dear Journal..."
+                        required></textarea>
+                    
+                    <div class="text-stats mt-3 d-flex justify-content-between text-muted">
+                        <div>
+                            <small>
+                                <i class="fas fa-font me-1"></i>
+                                Words: <span id="wordCount">0</span>
+                            </small>
+                        </div>
+                        <div>
+                            <small>
+                                <i class="fas fa-text-width me-1"></i>
+                                Characters: <span id="charCount">0</span>
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2 mt-4">
+                    <button type="submit" class="btn btn-primary btn-lg">
+                        <i class="fas fa-paper-plane me-2"></i>
+                        Save Journal Entry
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<style>
+    .gradient-text {
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        font-weight: bold;
+    }
+
+    .alert-purple {
+        background-color: rgba(124, 58, 237, 0.1);
+        border-color: rgba(124, 58, 237, 0.2);
+        color: var(--primary);
+    }
+
+    .card {
+        border-radius: 1rem;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+
+    .card:hover {
+        transform: translateY(-5px);
+    }
+
+    .card-header.bg-gradient {
+        background: linear-gradient(135deg, var(--primary-light), var(--primary));
+        color: white;
+    }
+
+    textarea.form-control {
+        border: 2px solid rgba(124, 58, 237, 0.1);
+        border-radius: 0.75rem;
+        padding: 1rem;
+        transition: all 0.3s ease;
+    }
+
+    textarea.form-control:focus {
+        border-color: var(--primary);
+        box-shadow: 0 0 0 0.25rem rgba(124, 58, 237, 0.25);
+    }
+
+    .text-stats {
+        font-size: 0.875rem;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        border: none;
+        border-radius: 0.75rem;
+        padding: 1rem 2rem;
+        transition: all 0.3s ease;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(124, 58, 237, 0.4);
+    }
+
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    .fade-in {
+        animation: fadeInUp 0.5s ease-out;
+    }
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const textarea = document.querySelector('textarea[name="content"]');
+    const wordCount = document.getElementById('wordCount');
+    const charCount = document.getElementById('charCount');
+
+    function updateCounts() {
+        const text = textarea.value.trim();
+        const words = text ? text.split(/\s+/).length : 0;
+        const chars = textarea.value.length;
+
+        wordCount.textContent = words;
+        charCount.textContent = chars;
+    }
+
+    textarea.addEventListener('input', updateCounts);
+    textarea.addEventListener('keyup', updateCounts);
+
+    // Auto-resize textarea
+    textarea.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+    });
+});
+</script>
+{% endblock %}
