@@ -57,7 +57,7 @@
                 </div>
             </div>
             <div class="card-actions">
-                <button class="btn-read-more" onclick="showJournalModal({{ loop.index0 }})">
+                <button class="btn-read-more" onclick="showJournalModal({ { loop.index0 }})">
                     <i class="fas fa-book-open"></i> Read More
                 </button>
                 <form action="{{ url_for('delete_entry', entry_id=entry.id) }}" 
@@ -201,8 +201,7 @@
         top: 1.5rem;
         right: 1.5rem;
         font-size: 0.9rem;
-        color: #666;
-    }
+        color: #666 }
 
     .preview-text {
         margin: 1rem 0;
@@ -216,55 +215,43 @@
     .sentiment-tag {
         background: rgba(124, 58, 237, 0.1);
         color: var(--primary);
-        padding: 0.3rem 0.8rem;
-        border-radius: 1rem;
-        font-size: 0.8rem;
+        padding: 0.3rem 0.6rem;
+        border-radius: 0.5rem;
+        font-weight: bold;
     }
 
     .card-actions {
         display: flex;
         justify-content: space-between;
         margin-top: 1rem;
-        padding-top: 1rem;
-        border-top: 1px solid rgba(255, 255, 255, 0.2);
     }
 
     .btn-read-more, .btn-delete {
-        background: none;
+        background: var(--primary);
+        color: white;
         border: none;
-        padding: 0.5rem 1rem;
         border-radius: 0.5rem;
-        transition: all 0.3s;
+        padding: 0.5rem 1rem;
+        cursor: pointer;
+        transition: background 0.3s ease;
     }
 
-    .btn-read-more {
-        color: var(--primary);
-    }
-
-    .btn-delete {
-        color: #DC2626;
- cursor: pointer;
-    }
-
-    .btn-read-more:hover {
-        background: rgba(124, 58, 237, 0.1);
-    }
-
-    .btn-delete:hover {
-        background: rgba(220, 38, 38, 0.1);
+    .btn-read-more:hover, .btn-delete:hover {
+        background: var(--secondary);
     }
 
     .journal-modal {
-        display: none; /* Initially hidden */
+        display: none; /* Hidden by default */
         position: fixed;
-        top: 0;
+        z-index: 1000;
         left: 0;
+        top: 0;
         width: 100%;
         height: 100%;
-        background: rgba(0, 0, 0, 0.7);
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.7);
         justify-content: center;
         align-items: center;
-        z-index: 1000;
     }
 
     .modal-content {
@@ -296,7 +283,7 @@
     }
 
     .btn-close {
-        background: none;
+        background: transparent;
         border: none;
         font-size: 1.5rem;
         cursor: pointer;
@@ -306,15 +293,16 @@
 <script>
     function filterEntries() {
         const sentimentFilter = document.getElementById('sentimentFilter').value.toLowerCase();
-        const dateFilter = document.getElementById('dateFilter').value.toLowerCase();
+        const dateFilter = document.getElementById('dateFilter').value;
         const journalCards = document.querySelectorAll('.journal-card');
 
         journalCards.forEach(card => {
             const cardSentiment = card.getAttribute('data-sentiment');
             const matchesSentiment = sentimentFilter ? cardSentiment === sentimentFilter : true;
-            const matchesDate = dateFilter ? true : true; // Implement date filtering logic if needed
 
-            if (matchesSentiment && matchesDate) {
+            // Implement date filtering logic if needed
+
+            if (matchesSentiment) {
                 card.style.display = 'block';
             } else {
                 card.style.display = 'none';
@@ -328,20 +316,23 @@
         const journalCards = document.querySelectorAll('.journal-card');
 
         const entry = journalCards[index];
-        const dateBadge = entry.querySelector('.date-badge');
         const content = entry.querySelector('.preview-text').innerText;
+        const dateBadge = entry.querySelector('.date-badge');
+        const month = dateBadge.querySelector('.month').innerText;
+        const day = dateBadge.querySelector('.day').innerText;
+        const year = dateBadge.querySelector('.year').innerText;
 
         modalContent.innerText = content;
-        document.getElementById('modalMonth').innerText = dateBadge.querySelector('.month').innerText;
-        document.getElementById('modalDay').innerText = dateBadge.querySelector('.day').innerText;
-        document.getElementById('modalYear').innerText = dateBadge.querySelector('.year').innerText;
+        document.getElementById('modalMonth').innerText = month;
+        document.getElementById('modalDay').innerText = day;
+        document.getElementById('modalYear').innerText = year;
 
-        modal.style.display = 'flex'; // Show modal
+        modal.style.display = 'flex'; // Show the modal
     }
 
     function hideJournalModal() {
         const modal = document.getElementById('journalModal');
-        modal.style.display = 'none'; // Hide modal
+        modal.style.display = 'none'; // Hide the modal
     }
 
     function confirmDelete() {
