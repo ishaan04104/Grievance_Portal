@@ -7,6 +7,9 @@ from transformers import pipeline, AutoTokenizer, BertForSequenceClassification
 import nltk
 from datetime import datetime, timedelta
 import pytz  # Import pytz for timezone handling
+from gensim import corpora
+from gensim.models import LdaModel
+import google.generativeai as genai
 
 # Ensure NLTK resources are downloaded
 nltk.download('punkt')
@@ -32,6 +35,10 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///journal.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 migrate = Migrate(app, db)  # Initialize Flask-Migrate
+
+# Set up Gemini API key
+genai.configure(api_key="AIzaSyA6EKKkJd8GSGt9hpYzBFxqL2AYIuB2bPU")  # Replace with your actual API key
+model = genai.GenerativeModel("gemini-pro")
 
 # Define the JournalEntry model
 class JournalEntry(db.Model):
@@ -85,7 +92,7 @@ def analyze_sentiment(text):
         return 'happy', sentiment[0]['score']
     elif sentiment_label == '3 stars':
         return 'neutral', sentiment[0]['score']
-    else:  # For LABEL_1 and LABEL_2
+    else:  # For 1 star and 2 stars
         return 'sad', sentiment[0]['score']
 
 @app.route('/')
