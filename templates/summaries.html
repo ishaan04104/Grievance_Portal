@@ -2,357 +2,364 @@
 
 {% block content %}
 <div class="summaries-container fade-in">
-    <div class="page-header">
-        <h1 class="gradient-text">Summaries</h1>
-        <div class="ai-features">
-            <div class="feature-badge">
-                <i class="fas fa-robot"></i>
-                <span>Journal Summarization</span>
-            </div>
-            <div class="feature-badge">
-                <i class="fas fa-chart-pie"></i>
-                <span>Topic Analysis</span>
-            </div>
-            <div class="feature-badge">
-                <i class="fas fa-heart"></i>
-                <span>Sentiment Analysis</span>
-            </div>
+    <!-- Header with Stats -->
+    <h1 class="text-center gradient-text mb-4">Your Summaries</h1>
+    <div class="d-flex justify-content-center gap-4 mb-4 stats-bar">
+        <div class="stat-badge">
+            <i class="fas fa-book"></i>
+            {{ entries|length }} Summaries
+        </div>
+        <div class="stat-badge">
+            <i class="fas fa-calendar"></i>
+            {{ entries[0].date_created.strftime('%B %Y') if entries }}
         </div>
     </div>
 
-    <div class="summaries-grid">
-        {% for entry in entries %}
-        <div class="summary-card">
-            <div class="card-header">
-                <div class="header-left">
-                    <div class="date">
-                        <i class="far fa-calendar-alt"></i>
-                        {{ entry.date_created.strftime('%B %d, %Y') }}
-                    </div>
-                    <div class="time">
-                        <i class="far fa-clock"></i>
-                        {{ entry.date_created.strftime('%I:%M %p') }}
-                    </div>
+    <!-- Search and Filters -->
+    <div class="search-section mb-4">
+        <div class="search-section mb-4">
+            <div class="d-flex gap-3 flex-wrap">
+                <div class="search-box flex-grow-1">
+                    <i class="fas fa-search"></i>
+                    <input type="text" placeholder="Search your entries..." class="form-control" id="searchInput">
                 </div>
-                <div class="sentiment-pill {{ entry.sentiment.lower() }}">
-                    {% if entry.sentiment.lower() == 'positive' %}
-                        <i class="fas fa-smile"></i>
-                    {% elif entry.sentiment.lower() == 'negative' %}
-                        <i class="fas fa-frown"></i>
-                    {% else %}
-                        <i class="fas fa-meh"></i>
-                    {% endif %}
-                    {{ entry.sentiment }}
-                </div>
-            </div>
-
-            <div class="card-body">
-                <div class="ai-summary">
-                    <div class="summary-header">
-                       
-                    </div>
-                    <p class="summary-text">{{ entry.summary }}</p>
-                </div>
-
-                {% if entry.topics %}
-                <div class="topics-section">
-                    <div class="topics-header">
-                        <i class="fas fa-tags"></i>
-                        <span>Key Topics</span>
-                    </div>
-                    <div class="topic-chips">
-                        {% for topic in entry.topics.split(';') %}
-                            <div class="topic-chip">{{ topic }}</div>
-                        {% endfor %}
-                    </div>
-                </div>
-                {% endif %}
-            </div>
-
-            <div class="card-footer">
-                <button class="view-full-btn" onclick="toggleOriginal(this)">
-                    <i class="fas fa-book-open"></i>
-                    View Original Entry
-                </button>
-            </div>
-
-            <div class="original-content" style="display: none;">
-                <div class="original-text">
-                    {{ entry.content }}
-                </div>
+                <select class="form-select w-auto" id="sentimentFilter" onchange="filterEntries()">
+                    <option value="">All Moods</option>
+                    <option value="happy">Happy</option>
+                    <option value="neutral">Neutral</option>
+                    <option value="sad">Sad</option>
+                </select>
+                <select class="form-select w-auto" id="dateFilter" onchange="filterEntries()">
+                    <option value="">All Time</option>
+                    <option value="week">This Week</option>
+                    <option value="month">This Month</option>
+                    <option value="year">This Year</option>
+                </select>
             </div>
         </div>
-        {% else %}
-        <div class="empty-state">
-            <i class="fas fa-robot"></i>
-            <h3>No Summaries Available</h3>
-            <p>Write your first journal entry to see AI-powered insights</p>
-            <a href="{{ url_for('express_feelings') }}" class="btn btn-primary">Start Writing</a>
+
+    <!-- Summary Entries -->
+    <div class="summaries-grid">
+        {% for entry in entries %}
+        <div class="summary-card" data-sentiment="{{ entry.sentiment.lower() }}" data-full-content="{{ entry.summary|e }}">
+            <div class="date-badge">
+                <span class="month">{{ entry.date_created.strftime('%b') }}</span>
+                <span class="day">{{ entry.date_created.strftime('%d') }}</span>
+                <span class="year">{{ entry.date_created.strftime('%Y') }}</span>
+            </div>
+            <div class="time-stamp">
+                <i class="far fa-clock"></i>
+                {{ entry.date_created.strftime('%I:%M %p') }}
+            </div>
+            <div class="card-content">
+                <p class="preview-text">{{ entry.summary|truncate(200) }}</p>
+                <div class="sentiment">
+                    <span class="sentiment-tag">{{ entry.sentiment }}</span>
+                </div>
+            </div>
+            <div class="card-actions">
+                <button class="btn-read-more" onclick="showSummaryModal({{ loop.index0 }})">
+                    <i class="fas fa-book-open"></i> Read More
+                </button>
+            </div>
         </div>
         {% endfor %}
     </div>
 </div>
 
+<!-- Summary Modal -->
+<div class="summary-modal" id="summaryModal" style="display: none;">
+    <div class="modal-content">
+        <div class="modal-header">
+            <div class="modal-date" class="modal-text" style="color: black;">
+                <span class="month" id="modalMonth"></span>
+                <span class="day" id="modalDay"></span>
+                <span class="year" id="modalYear"></span>
+            </div>
+            <button class="btn-close" onclick="hideSummaryModal()">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div id="modalContent" class="modal-text" style="color: black; white-space: pre-wrap;"></div>
+        </div>
+    </div>
+</div>
+
 <style>
-.summaries-container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 2rem;
-}
-
-.page-header {
-    text-align: center;
-    margin-bottom: 3rem;
-}
-
-.gradient-text {
-    font-size: 2.5rem;
-    font-weight: bold;
-    background: linear-gradient(135deg, var(--primary), var(--secondary));
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    margin-bottom: 1.5rem;
-}
-
-.ai-features {
-    display: flex;
-    gap: 1rem;
-    justify-content: center;
-    flex-wrap: wrap;
-}
-
-.feature-badge {
-    background: var(--glass);
-    backdrop-filter: blur(10px);
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.9rem;
-    color: var(--primary);
-    animation: fadeIn 0.5s ease-out forwards;
-}
-
-.summaries-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-    gap: 2rem;
-}
-
-.summary-card {
-    background: var(--glass);
-    backdrop-filter: blur(10px);
-    border-radius: 20px;
-    overflow: hidden;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    transition: all 0.3s ease;
-}
-
-.summary-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
-}
-
-.card-header {
-    background: var(--glass-gradient);
-    padding: 1.5rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.header-left {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-.date, .time {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.9rem;
-    color: var(--text);
-}
-
-.sentiment-pill {
-    padding: 0.5rem 1rem;
-    border-radius: 20px;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    font-size: 0.9rem;
-}
-
-.sentiment-pill.positive {
-    background: rgba(16, 185, 129, 0.1);
-    color: #059669;
-}
-
-.sentiment-pill.negative {
-    background: rgba(239, 68, 68, 0.1);
-    color: #DC2626;
-}
-
-.sentiment-pill.neutral {
-    background: rgba(107, 114, 128, 0.1);
-    color: #4B5563;
-}
-
-.card-body {
-    padding: 1.5rem;
-}
-
-.ai-summary {
-    margin-bottom: 1.5rem;
-}
-
-.summary-header, .topics-header {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: var(--primary);
-    margin-bottom: 1rem;
-    font-weight: 500;
-}
-
-.summary-text {
-    line-height: 1.6;
-    color: var(--text);
-}
-
-.topics-section {
-    margin-top: 1.5rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.topic-chips {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-}
-
-.topic-chip {
-    background: rgba(124, 58, 237, 0.1);
-    color: var(--primary);
-    padding: 0.3rem 0.8rem;
-    border-radius: 15px;
-    font-size: 0.8rem;
-}
-
-.card-footer {
-    padding: 1.5rem;
-    border-top: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.view-full-btn {
-    width: 100%;
-    padding: 0.8rem;
-    border: none;
-    border-radius: 10px;
-    background: transparent;
-    color: var(--text);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    transition: all 0.3s ease;
-    cursor: pointer;
-}
-
-.view-full-btn:hover {
-    background: rgba(124, 58, 237, 0.1);
-    color: var(--primary);
-}
-
-.original-content {
-    padding: 1.5rem;
-    background: rgba(124, 58, 237, 0.05);
-    border-top: 1px solid rgba(255, 255, 255, 0.2);
-}
-
-.original-text {
-    line-height: 1.6;
-    color: var(--text);
-}
-
-.empty-state {
-    grid-column: 1 / -1;
-    text-align: center;
-    padding: 3rem;
-}
-
-.empty-state i {
-    font-size: 3rem;
-    color: var(--primary);
-    margin-bottom: 1rem;
-}
-
-.empty-state h3 {
-    margin-bottom: 0.5rem;
-}
-
-.empty-state p {
-    color: var(--text);
-    opacity: 0.7;
-    margin-bottom: 1.5rem;
-}
-
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
-}
-
-@media (max-width: 768px) {
     .summaries-container {
-        padding: 1rem;
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 2rem;
+    }
+
+    .gradient-text {
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    .stats-bar {
+        display: flex;
+        justify-content: center;
+        gap: 2rem;
+        margin-top: 1.5rem;
+    }
+
+    .stat-badge {
+        background: var(--glass);
+        backdrop-filter: blur(10px);
+        padding: 0.5rem 1.5rem;
+        border-radius: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--primary);
+        border: 1px solid rgba(124, 58, 237, 0.2);
+    }
+
+    .search-box {
+        position: relative;
+        min-width: 300px;
+    }
+
+    .search-box i {
+        position: absolute;
+        left: 1rem;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--primary);
+    }
+
+    .search-box input {
+        padding-left: 2.5rem;
+        border-radius: 1rem;
+        border: 1px solid rgba(124, 58, 237, 0.2);
+    }
+
+    .form-select {
+        border-radius: 1rem;
+        border: 1px solid rgba(124, 58, 237, 0.2);
+        padding: 0.5rem 2.5rem 0.5rem 1rem;
     }
 
     .summaries-grid {
-        grid-template-columns: 1fr;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 1.5rem;
+        margin-top: 2rem;
     }
 
-    .card-header {
-        flex-direction: column;
-        gap: 1rem;
+    .summary-card {
+        background: var(--glass);
+        backdrop-filter: blur(10px);
+        border-radius: 1rem;
+        overflow: hidden;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        padding: 1.5rem;
+    }
+
+    .summary-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+    }
+
+    .date-badge {
         text-align: center;
+        line-height: 1.2;
+        background: rgba(124, 58, 237, 0.1);
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
     }
 
-    .sentiment-pill {
-        width: 100%;
-        justify-content: center;
+    .date-badge .month {
+        font-size: 0.9rem;
+        color: var(--primary);
+        font-weight: 500;
     }
-}
+
+    .date-badge .day {
+        font-size: 1.5rem;
+        font-weight: bold;
+    }
+
+    .date-badge .year {
+        font-size: 0.8rem;
+        opacity: 0.7;
+    }
+
+    .time-stamp {
+        position: absolute;
+        top: 1.5rem;
+        right: 1.5rem;
+        font-size: 0.9rem;
+        color: #666;
+    }
+
+    .preview-text {
+        margin: 1rem 0;
+        line-height: 1.6;
+    }
+
+    .sentiment {
+        margin-top: 1rem;
+    }
+
+    .sentiment-tag {
+        background: rgba(124, 58, 237, 0.1);
+        color: var(--primary);
+        padding: 0.3rem 0.6rem;
+        border-radius: 0.5rem;
+        font-weight: bold;
+    }
+
+    .card-actions {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 1rem;
+    }
+
+    .btn-read-more {
+        background: var(--primary);
+        color: white;
+        border: none;
+        border-radius: 0.5rem;
+        padding: 0.5rem 1rem;
+        cursor: pointer;
+        transition: background 0.3s ease;
+    }
+
+    .btn-read-more:hover {
+        background: var(--secondary);
+    }
+
+    .summary-modal {
+        display: none; /* Hidden by default */
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.7);
+        justify-content: center;
+        align-items: center;
+    }
+
+    .modal-content {
+        background: white;
+        border-radius: 1rem;
+        padding: 2rem;
+        max-width: 600px;
+        width: 90%;
+        position: relative;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+    }
+
+    .modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #ddd;
+        padding-bottom: 1rem;
+    }
+
+    .modal-date {
+        font-size: 1.2rem;
+        font-weight: bold;
+    }
+
+    .modal-body {
+        margin-top: 1rem;
+        max-height: 400px;
+        overflow-y: auto;
+    }
+
+    .modal-text {
+        line-height: 1.6;
+        color: black;
+        white-space: pre-wrap;
+    }
+
+    .btn-close {
+        background: transparent;
+        border: none;
+        font-size: 1.5rem;
+        cursor: pointer;
+        color: var(--primary);
+    }
+
+    .btn-close:hover {
+        color: var(--secondary);
+    }
 </style>
 
 <script>
-function toggleOriginal(btn) {
-    const card = btn.closest('.summary-card');
-    const originalContent = card.querySelector('.original-content');
-    const isHidden = originalContent.style.display === 'none';
-    
-    // Smooth transition
-    originalContent.style.display = isHidden ? 'block' : 'none';
-    
-    // Update button text
-    btn.innerHTML = isHidden ? 
-        '<i class="fas fa-times"></i> Hide Original Entry' :
-        '<i class="fas fa-book-open"></i> View Original Entry';
-        
-    if (isHidden) {
-        originalContent.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
-}
+    function filterEntries() {
+        const sentimentFilter = document.getElementById('sentimentFilter').value.toLowerCase();
+        const dateFilter = document.getElementById('dateFilter').value;
+        const journalCards = document.querySelectorAll('.journal-card');
 
-// Add fade-in animation for cards
-document.addEventListener('DOMContentLoaded', function() {
-    const cards = document.querySelectorAll('.summary-card');
-    cards.forEach((card, index) => {
-        card.style.animation = `fadeIn 0.5s ease-out ${index * 0.1}s forwards`;
-    });
-});
+        journalCards.forEach(card => {
+            const cardSentiment = card.getAttribute('data-sentiment');
+            const matchesSentiment = sentimentFilter ? cardSentiment === sentimentFilter : true;
+
+            // Implement date filtering logic if needed
+
+            if (matchesSentiment) {
+                card.style.display = 'block';
+            } else {
+                card.style.display = 'none';
+            }
+        });
+    }
+
+    function sortSummaries() {
+        const sortValue = document.getElementById('sentimentSort').value.toLowerCase();
+        const summaryCards = Array.from(document.querySelectorAll('.summary-card'));
+
+        // Sort the summary cards based on the selected sentiment
+        const sortedCards = summaryCards.sort((a, b) => {
+            const sentimentA = a.getAttribute('data-sentiment');
+            const sentimentB = b.getAttribute('data-sentiment');
+
+            if (sortValue === "") return 0; // No sorting if no option is selected
+            if (sentimentA === sortValue && sentimentB !== sortValue) return -1; // A comes first
+            if (sentimentB === sortValue && sentimentA !== sortValue) return 1; // B comes first
+            return 0; // Keep original order
+        });
+
+        // Clear the current display and append sorted cards
+        const summariesGrid = document.querySelector('.summaries-grid');
+        summariesGrid.innerHTML = ''; // Clear existing cards
+        sortedCards.forEach(card => summariesGrid.appendChild(card)); // Append sorted cards
+    }
+
+    function showSummaryModal(index) {
+        const modal = document.getElementById('summaryModal');
+        const modalContent = document.getElementById('modalContent');
+        const summaryCards = document.querySelectorAll('.summary-card');
+
+        const entry = summaryCards[index];
+        const fullContent = entry.getAttribute('data-full-content'); // Get the full content from the data attribute
+        const dateBadge = entry.querySelector('.date-badge');
+        const month = dateBadge.querySelector('.month').innerText;
+        const day = dateBadge.querySelector('.day').innerText;
+        const year = dateBadge.querySelector('.year').innerText;
+
+        modalContent.innerText = fullContent; // Set the full content in the modal
+        document.getElementById('modalMonth').innerText = month;
+        document.getElementById('modalDay').innerText = day;
+        document.getElementById('modalYear').innerText = year;
+
+        modal.style.display = 'flex'; // Show the modal
+    }
+
+    function hideSummaryModal() {
+        const modal = document.getElementById('summaryModal');
+        modal.style.display = 'none'; // Hide the modal
+    }
 </script>
 {% endblock %}
