@@ -35,20 +35,10 @@ db = SQLAlchemy(app)
 migrate = Migrate(app, db)  # Initialize Flask-Migrate
 
 # Set up Gemini API key
-genai.configure(api_key="AIzaSyCT_jd5mwKnlIO0_hX4kKc8oToRyzU_fXg")  # Replace with your actual API key
+genai.configure(api_key="###########################")  # Replace with your actual API key
 model = genai.GenerativeModel("gemini-pro")
 
 # Define the JournalEntry model
-# class JournalEntry(db.Model):
-#     id = db.Column(db.Integer, primary_key=True)
-#     content = db.Column(db.Text, nullable=False)
-#     summary = db.Column(db.Text, nullable=True)
-#     sentiment = db.Column(db.Text, nullable=True)  # Changed from topics to sentiment
-#     date_created = db.Column(db.DateTime, default=datetime.now(pytz.timezone('Asia/Kolkata')))  # Set default to IST
-
-#     def __repr__(self):
-#         return f'<JournalEntry {self.id}>'
-
 class JournalEntry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.Text, nullable=False)
