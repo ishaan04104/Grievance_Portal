@@ -17,26 +17,26 @@
 
     <!-- Search and Filters -->
     <div class="search-section mb-4">
-        <div class="search-section mb-4">
-            <div class="d-flex gap-3 flex-wrap">
-                <div class="search-box flex-grow-1">
-                    <i class="fas fa-search"></i>
-                    <input type="text" placeholder="Search your entries..." class="form-control" id="searchInput">
-                </div>
-                <select class="form-select w-auto" id="sentimentFilter" onchange="filterEntries()">
-                    <option value="">All Moods</option>
-                    <option value="happy">Happy</option>
-                    <option value="neutral">Neutral</option>
-                    <option value="sad">Sad</option>
-                </select>
-                <select class="form-select w-auto" id="dateFilter" onchange="filterEntries()">
-                    <option value="">All Time</option>
-                    <option value="week">This Week</option>
-                    <option value="month">This Month</option>
-                    <option value="year">This Year</option>
-                </select>
+        <div class="d-flex gap-3 flex-wrap">
+            <div class="search-box flex-grow-1">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Search your entries..." class="form-control" id="searchInput">
             </div>
+            <select class="form-select w-auto" id="sentimentFilter" onchange="filterEntries()">
+                <option value="">All Moods</option>
+                <option value="happy">Happy</option>
+                <option value="neutral">Neutral</option>
+                <option value="sad">Sad</option>
+            </select>
+            <select class="form-select w-auto" id="dateFilter" onchange="filterEntries()">
+                <option value="">All Time</option>
+                <option value="week">This Week</option>
+                <option value="month">This Month</option>
+                <option value="year">This Year</option>
+            </select>
+           
         </div>
+    </div> 
 
     <!-- Summary Entries -->
     <div class="summaries-grid">
@@ -300,9 +300,9 @@
     function filterEntries() {
         const sentimentFilter = document.getElementById('sentimentFilter').value.toLowerCase();
         const dateFilter = document.getElementById('dateFilter').value;
-        const journalCards = document.querySelectorAll('.journal-card');
+        const summaryCards = document.querySelectorAll('.summary-card');
 
-        journalCards.forEach(card => {
+        summaryCards.forEach(card => {
             const cardSentiment = card.getAttribute('data-sentiment');
             const matchesSentiment = sentimentFilter ? cardSentiment === sentimentFilter : true;
 
