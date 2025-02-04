@@ -7,8 +7,6 @@ from transformers import pipeline, AutoTokenizer, BertForSequenceClassification
 import nltk
 from datetime import datetime, timedelta
 import pytz  # Import pytz for timezone handling
-from gensim import corpora
-from gensim.models import LdaModel
 import google.generativeai as genai
 
 # Ensure NLTK resources are downloaded
@@ -37,16 +35,26 @@ db = SQLAlchemy(app)
 migrate = Migrate(app, db)  # Initialize Flask-Migrate
 
 # Set up Gemini API key
-genai.configure(api_key="AIzaSyA6EKKkJd8GSGt9hpYzBFxqL2AYIuB2bPU")  # Replace with your actual API key
+genai.configure(api_key="AIzaSyCT_jd5mwKnlIO0_hX4kKc8oToRyzU_fXg")  # Replace with your actual API key
 model = genai.GenerativeModel("gemini-pro")
 
 # Define the JournalEntry model
+# class JournalEntry(db.Model):
+#     id = db.Column(db.Integer, primary_key=True)
+#     content = db.Column(db.Text, nullable=False)
+#     summary = db.Column(db.Text, nullable=True)
+#     sentiment = db.Column(db.Text, nullable=True)  # Changed from topics to sentiment
+#     date_created = db.Column(db.DateTime, default=datetime.now(pytz.timezone('Asia/Kolkata')))  # Set default to IST
+
+#     def __repr__(self):
+#         return f'<JournalEntry {self.id}>'
+
 class JournalEntry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     content = db.Column(db.Text, nullable=False)
     summary = db.Column(db.Text, nullable=True)
-    sentiment = db.Column(db.Text, nullable=True)  # Changed from topics to sentiment
-    date_created = db.Column(db.DateTime, default=datetime.now(pytz.timezone('Asia/Kolkata')))  # Set default to IST
+    sentiment = db.Column(db.Text, nullable=True)
+    date_created = db.Column(db.DateTime, default=lambda: datetime.now(pytz.timezone('Asia/Kolkata')))  # Use a lambda function
 
     def __repr__(self):
         return f'<JournalEntry {self.id}>'
@@ -81,19 +89,29 @@ def summarize_journal_entry(entry):
     return " ".join(summaries)  # Combine summaries from all chunks
 
 def analyze_sentiment(text):
-    # Analyze sentiment for the entire text
-    sentiment = sentiment_analyzer(text)
-    
-    # Extract the sentiment label
-    sentiment_label = sentiment[0]['label']  # This will give you the sentiment label
+    # Chunk the text into smaller segments of max_length tokens
+    chunks = chunk_text(text, max_length=256)  # Ensure chunks are within 256 tokens
+    sentiments = []
+
+    for chunk in chunks:
+        sentiment = sentiment_analyzer(chunk)
+        sentiments.append(sentiment[0])  # Collect sentiment results for each chunk
+
+    # Combine the results from all chunks
+    if sentiments:
+        sentiment_label = sentiments[0]['label']
+        sentiment_score = sentiments[0]['score']
+    else:
+        sentiment_label = 'neutral'
+        sentiment_score = 0.5  # Default score
 
     # Map the sentiment labels to user-friendly terms
     if sentiment_label in ['5 stars', '4 stars']:
-        return 'happy', sentiment[0]['score']
+        return 'happy', sentiment_score
     elif sentiment_label == '3 stars':
-        return 'neutral', sentiment[0]['score']
+        return 'neutral', sentiment_score
     else:  # For 1 star and 2 stars
-        return 'sad', sentiment[0]['score']
+        return 'sad', sentiment_score
 
 @app.route('/')
 def home():

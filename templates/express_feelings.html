@@ -11,15 +11,15 @@
     <div class="mood-selector mb-4 text-center">
         <h5 class="text-muted mb-3">How are you feeling today?</h5>
         <div class="d-flex justify-content-center gap-3">
-            <button class="mood-btn" data-mood="happy">
+            <button class="mood-btn" data-mood="happy" disabled>
                 <i class="fas fa-smile-beam fa-2x"></i>
                 <span>Happy</span>
             </button>
-            <button class="mood-btn" data-mood="neutral">
+            <button class="mood-btn" data-mood="neutral" disabled>
                 <i class="fas fa-meh fa-2x"></i>
                 <span>Neutral</span>
             </button>
-            <button class="mood-btn" data-mood="sad">
+            <button class="mood-btn" data-mood="sad" disabled>
                 <i class="fas fa-frown fa-2x"></i>
                 <span>Sad</span>
             </button>
@@ -55,7 +55,7 @@
 
     <div class="card shadow-lg border-0">
         <div class="card-header bg-gradient text-center py-3">
-            <h4 class="card-title mb-0">Journal Entry</h4>
+            <h4 class="card-title mb-0" style="color:white">Journal Entry</h4>
             <div class="writing-mode-toggle mt-2">
                 <button class="btn btn-sm btn-outline-light active" id="freeWriteMode">
                     <i class="fas fa-pencil-alt me-1"></i> Free Write

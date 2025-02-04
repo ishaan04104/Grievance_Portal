@@ -40,7 +40,7 @@
     <!-- Journal Entries -->
     <div class="journal-grid">
         {% for entry in entries %}
-        <div class="journal-card" data-sentiment="{{ entry.sentiment.lower() }}">
+        <div class="journal-card" data-sentiment="{{ entry.sentiment.lower() }}" data-full-content="{{ entry.content|e }}">
             <div class="date-badge">
                 <span class="month">{{ entry.date_created.strftime('%b') }}</span>
                 <span class="day">{{ entry.date_created.strftime('%d') }}</span>
@@ -57,7 +57,7 @@
                 </div>
             </div>
             <div class="card-actions">
-                <button class="btn-read-more" onclick="showJournalModal({ { loop.index0 }})">
+                <button class="btn-read-more" onclick="showJournalModal({{ loop.index0 }})">
                     <i class="fas fa-book-open"></i> Read More
                 </button>
                 <form action="{{ url_for('delete_entry', entry_id=entry.id) }}" 
@@ -75,10 +75,10 @@
 </div>
 
 <!-- Journal Modal -->
-<div class="journal-modal" id="journalModal">
+<div class="journal-modal" id="journalModal" style="display: none;">
     <div class="modal-content">
         <div class="modal-header">
-            <div class="modal-date">
+            <div class="modal-date" class="modal-text" style="color: black;">
                 <span class="month" id="modalMonth"></span>
                 <span class="day" id="modalDay"></span>
                 <span class="year" id="modalYear"></span>
@@ -88,7 +88,7 @@
             </button>
         </div>
         <div class="modal-body">
-            <div id="modalContent" class="modal-text"></div>
+            <div id="modalContent" class="modal-text" style="color: black; white-space: pre-wrap;"></div> <!-- Preserve whitespace -->
         </div>
     </div>
 </div>
@@ -201,7 +201,8 @@
         top: 1.5rem;
         right: 1.5rem;
         font-size: 0.9rem;
-        color: #666 }
+        color: #666;
+    }
 
     .preview-text {
         margin: 1rem 0;
@@ -261,12 +262,15 @@
         max-width: 600px;
         width: 90%;
         position: relative;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2); /* Add shadow for depth */
     }
 
     .modal-header {
         display: flex;
         justify-content: space-between;
         align-items: center;
+        border-bottom: 1px solid #ddd; /* Add a bottom border */
+        padding-bottom: 1rem; /* Add padding for spacing */
     }
 
     .modal-date {
@@ -276,10 +280,15 @@
 
     .modal-body {
         margin-top: 1rem;
+        max-height: 400px; /* Set a maximum height for the modal body */
+        overflow-y: auto; /* Enable vertical scrolling if content exceeds max height */
     }
+    
 
     .modal-text {
         line-height: 1.6;
+        color: black; /* Set text color to black for better visibility */
+        white-space: pre-wrap; /* Preserve whitespace and line breaks */
     }
 
     .btn-close {
@@ -287,6 +296,11 @@
         border: none;
         font-size: 1.5rem;
         cursor: pointer;
+        color: var(--primary); /* Use a color variable for consistency */
+    }
+
+    .btn-close:hover {
+        color: var(--secondary); /* Change color on hover */
     }
 </style>
 
@@ -314,19 +328,19 @@
         const modal = document.getElementById('journalModal');
         const modalContent = document.getElementById('modalContent');
         const journalCards = document.querySelectorAll('.journal-card');
-
+    
         const entry = journalCards[index];
-        const content = entry.querySelector('.preview-text').innerText;
+        const fullContent = entry.getAttribute('data-full-content'); // Get the full content
         const dateBadge = entry.querySelector('.date-badge');
         const month = dateBadge.querySelector('.month').innerText;
         const day = dateBadge.querySelector('.day').innerText;
         const year = dateBadge.querySelector('.year').innerText;
-
-        modalContent.innerText = content;
+    
+        modalContent.innerText = fullContent; // Set the full content in the modal
         document.getElementById('modalMonth').innerText = month;
         document.getElementById('modalDay').innerText = day;
         document.getElementById('modalYear').innerText = year;
-
+    
         modal.style.display = 'flex'; // Show the modal
     }
 
